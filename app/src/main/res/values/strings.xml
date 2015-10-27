@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">Top Movies</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_movie_detail">Movie Details</string>
+    <string name="rating_prefix">"Rating: "</string>
+    <string name="date_prefix">"Released: "</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+
+    <!-- Example General settings -->
+    <string name="pref_sort_order">Sort Order</string>
+    <string name="pref_title_sort_order">Select Sort Criteria</string>
+
+    <string-array name="pref_sort_list_titles">
+        <item>Most Popular</item>
+        <item>Highest Rating</item>
+    </string-array>
+    <string-array name="pref_sort_list_values">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+
+    <string name="pref_api_key_title">API Key String for The Movie Database (TMDB)</string>
+    <string name="pref_api_key_summary">Used to access TMDB programmatically</string>
+
+    <string name="pref_min_votes_title">Requires at least 50 Votes</string>
+
+    <string name="pref_count">Must have at least 50 votes</string>
+    <string name="pref_count_summ">Low vote count = not popular</string>
+
+    <string name="sorted_by_most_popular">Most Popular</string>
+    <string name="sorted_by_highest_rating">Highest Rating</string>
+
+    <string name="no_key_title">API Key Required for The Movie Database</string>
+    <string name="no_key_positive_button">Enter Key Now</string>
+    <string name="no_key_negative_button">Exit App Now</string>
+    <string name="sorted_by_title">"Sorted by: "</string>
+    <string name="no_internet_connection">No Internet Connection. Please check WiFi or Cell Data settings</string>
+    <string name="error_check_API_Key">Error Calling TMDB.  Please confirm your API Key in the Settings</string>
+</resources>

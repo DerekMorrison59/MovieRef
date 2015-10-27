@@ -1,0 +1,28 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
+         dismiss it. -->
+    <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
+    <ListPreference
+        android:key="@string/pref_sort_order"
+        android:title="@string/pref_title_sort_order"
+        android:defaultValue="-1"
+        android:entries="@array/pref_sort_list_titles"
+        android:entryValues="@array/pref_sort_list_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <CheckBoxPreference
+        android:key="pref_vote_count"
+        android:title="@string/pref_count"
+        android:summary="@string/pref_count_summ"
+        android:defaultValue="true" />
+
+    <EditTextPreference
+        android:key="pref_api_key"
+        android:title="@string/pref_api_key_title"
+        android:summary="@string/pref_api_key_summary"
+        android:defaultValue="NONE"
+        />
+
+</PreferenceScreen>

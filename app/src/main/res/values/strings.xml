@@ -41,4 +41,7 @@
     <string name="sorted_by_title">"Sorted by: "</string>
     <string name="no_internet_connection">No Internet Connection. Please check WiFi or Cell Data settings</string>
     <string name="error_check_API_Key">Error Calling TMDB.  Please confirm your API Key in the Settings</string>
+    <string name="not_available_NA">N/A</string>
+    <string name="btn_retry_connection">Retry Connection</string>
+    <string name="button_retry_connection">Retry Connection</string>
 </resources>

@@ -56,7 +56,7 @@ public class MovieDetailActivityFragment extends Fragment {
             final String TMDB_BASE = "http://image.tmdb.org/t/p/";
             final String TMDB_IMAGE_SIZE = "w780";
 
-            if (thisMovie.getmPosterPath().equals("N/A")) {
+            if (thisMovie.getmPosterPath().equals(getResources().getString(R.string.not_available_NA))) {
                 // load the "Image Not Available" image because there is no poster
                 Picasso.with(rootView.getContext()).load(R.drawable.image_not_avail).into(imageView);
             } else {
@@ -64,7 +64,7 @@ public class MovieDetailActivityFragment extends Fragment {
                 imageURL.append(TMDB_IMAGE_SIZE);
                 imageURL.append(thisMovie.getmPosterPath());
 
-                // use the Picasso library to make image handling super easy
+                // use the Picasso library to do image handling
                 Picasso.with(rootView.getContext()).load(imageURL.toString()).into(imageView);
             }
         }

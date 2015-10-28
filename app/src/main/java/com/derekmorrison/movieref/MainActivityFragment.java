@@ -20,6 +20,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.GridView;
 import android.widget.TextView;
 
@@ -63,11 +64,14 @@ public class MainActivityFragment extends Fragment {
 
             // all the MovieData objects were saved in the Bundle
             mResult = (MovieData[]) savedInstanceState.getParcelableArray("LastMovieData");
-            ArrayList<MovieData> movieList = new ArrayList(Arrays.asList(mResult));
-            mMovieAdapter = new MovieArrayAdapter(
-                    getActivity(),
-                    movieList
-            );
+
+            if (mResult != null) {
+                ArrayList<MovieData> movieList = new ArrayList(Arrays.asList(mResult));
+                mMovieAdapter = new MovieArrayAdapter(
+                        getActivity(),
+                        movieList
+                );
+            }
         }
 
         // Add this line in order for this fragment to handle menu events.
@@ -100,6 +104,16 @@ public class MainActivityFragment extends Fragment {
                 mList
             );
         }
+
+        // get a reference to the Retry Connection button and setup a listener
+        Button rButton = (Button) rootView.findViewById(R.id.retryButton);
+        rButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    updateMovieList();
+                }
+            }
+        );
+
 
         // Get a reference to the GridView, and attach the Movie Adapter to it.
         GridView gridView = (GridView) rootView.findViewById(R.id.poster_gridView);
@@ -134,9 +148,6 @@ public class MainActivityFragment extends Fragment {
         if (Globals.getInstance().getPrefChanged()) {
             updateMovieList();
         }
-
-        // reset the flag to avoid unnecessary updates
-        Globals.getInstance().setPrefChanged(false);
     }
 
     private void updateMovieList(){
@@ -144,12 +155,6 @@ public class MainActivityFragment extends Fragment {
         final String LEGIT_MIN_VOTES = "50";
         final String NO_MIN_VOTES = "0";
         final String HIGHEST_RATED = "0";
-
-        // check the data connection
-        if (Globals.getInstance().getDataConnection() == false){
-            // there's no point in going through all this code if there is no internet connection
-            return;
-        }
 
         // read the current preferences stored on this device
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this.getActivity().getApplicationContext());
@@ -185,8 +190,11 @@ public class MainActivityFragment extends Fragment {
         if (thisView != null)
             selectedBy = (TextView)thisView.findViewById(R.id.selectedBytextView);
 
-        if (selectedBy != null)
-            selectedBy.setText(getResources().getString(R.string.sorted_by_title) + sorted_by);
+        if (selectedBy != null) {
+            String sort_selection = getResources().getString(R.string.sorted_by_title);
+            sort_selection += sorted_by;
+            selectedBy.setText(sort_selection);
+        }
 
         // create a new async task and launch it
         FetchMoviesTask moviesTask = new FetchMoviesTask();
@@ -194,7 +202,7 @@ public class MainActivityFragment extends Fragment {
     }
 
     // this method is used to inform the user that there is no proper API Key for TMDB stored in the prefs
-    // the choice now is to exit or enter the key via the settings activity
+    // the choices are to exit this app or enter the API key now via the settings activity
     private void showDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setCancelable(false);
@@ -237,7 +245,7 @@ public class MainActivityFragment extends Fragment {
         // it is more user friendly to show 'N/A' for the string instead of 'null'
         private String ReplaceNull(String in){
             if (in.equals("null")){
-                in = "N/A";
+                in = getResources().getString(R.string.not_available_NA);
             }
             return in;
         }
@@ -289,7 +297,7 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected MovieData[] doInBackground(String... params) {
 
-            // all of these strings are currently 'fixed' by the movie database
+            // all of these strings are currently defined by the movie database
             final String MOVIE_DB_BASE_URL = "http://api.themoviedb.org/3/discover/movie";
             final String SORT_PARAM = "sort_by";
             final String VOTE_COUNT = "vote_count.gte";
@@ -298,14 +306,13 @@ public class MainActivityFragment extends Fragment {
             final String SORT_BY_POPULAR = "popularity.desc";
             final String SORT_BY_VOTE = "vote_average.desc";
 
+            // Check for working internet connection and remember the status
+            boolean connectionOK = hasActiveInternetConnection(getActivity().getApplicationContext());
+            Globals.getInstance().setDataConnection(connectionOK);
 
-            // ToDo Check for working internet connection
-            if (!hasActiveInternetConnection(getActivity().getApplicationContext())) {
-                Globals.getInstance().setDataConnection(false);
+            // no data connection means there is no point in trying to call TMDB
+            if (!connectionOK) {
                 return null;
-            } else
-            {
-                Globals.getInstance().setDataConnection(true);
             }
 
             // default sort order is "Most Popular"
@@ -319,7 +326,8 @@ public class MainActivityFragment extends Fragment {
             if (count_minimum.isEmpty())
                 count_minimum = "0";
 
-            // if there is no API Key for TMDB then there is no point in making the call
+            // if there is no API Key for TMDB then there is no point in calling TMDB
+            // todo add more advanced tests for the API Key?
             String apiKey = params[2];
             if (apiKey.isEmpty())
                 return null;
@@ -404,6 +412,13 @@ public class MainActivityFragment extends Fragment {
         }
 
 
+        /*
+            This code was lifted from a couple of examples found on StackOverflow
+
+            requires     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+            this method tests the flags available in the ConnectivityManager and returns 'true' if any data path is 'CONNECTED'
+        */
         public boolean isNetworkAvailable(Context context) {
             ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -422,6 +437,12 @@ public class MainActivityFragment extends Fragment {
             return false;
         }
 
+        /*
+            This code was lifted from a couple of examples found on StackOverflow
+
+          this method checks for a data connection and then attempts to 'ping' a google server
+          if the '204' request is successful then 'true' is returned
+        */
         public boolean hasActiveInternetConnection(Context context) {
             if (isNetworkAvailable(context)) {
                 try {
@@ -445,6 +466,9 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieData[] result) {
 
+            // reset the flag to avoid unnecessary updates
+            Globals.getInstance().setPrefChanged(false);
+
             int errorMsgVisibility = View.GONE;
             String errMessageString = getResources().getString(R.string.no_internet_connection);
 
@@ -459,7 +483,6 @@ public class MainActivityFragment extends Fragment {
                 ArrayList<MovieData> m = new ArrayList(Arrays.asList(result));
                 mMovieAdapter.addAll(m);
             } else {
-                //Toast.makeText(getActivity(), "Call to TMDB Failed!", Toast.LENGTH_LONG).show();
                 // show error message to the user
                 errorMsgVisibility = View.VISIBLE;
 
@@ -468,17 +491,28 @@ public class MainActivityFragment extends Fragment {
                 }
             }
 
+            Button retry = null;
             TextView errorMsgTextView = null;
             View thisView = getView();
 
             // make sure the view is not null before using it to find the TextView
-            if (thisView != null)
-                errorMsgTextView = (TextView)thisView.findViewById(R.id.errorTMDB_TextView);
+            if (thisView != null) {
+                retry = (Button) thisView.findViewById(R.id.retryButton);
+                errorMsgTextView = (TextView) thisView.findViewById(R.id.errorTMDB_TextView);
+            }
 
             // make sure the TextView was found before setting the visibility
             if (errorMsgTextView != null) {
                 errorMsgTextView.setText(errMessageString);
                 errorMsgTextView.setVisibility(errorMsgVisibility);
+            }
+
+            // the retry button is only visability when the problem is the internet connection
+            if (retry != null) {
+                int buttonVisibility = View.GONE;
+                if (!Globals.getInstance().getDataConnection())
+                    buttonVisibility = View.VISIBLE;
+                retry.setVisibility(buttonVisibility);
             }
         }
     }

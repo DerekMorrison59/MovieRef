@@ -1,13 +1,13 @@
 package com.derekmorrison.movieref;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -16,21 +16,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if( savedInstanceState != null ) {
-            Toast.makeText(this, savedInstanceState.getString("message"), Toast.LENGTH_LONG).show();
+        if( savedInstanceState == null ) {
+            // make sure the data gets updated on the first time through
+            Globals.getInstance().setPrefChanged(true);
         }
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        // make sure the data gets updated on the first time through
-        Globals.getInstance().setPrefChanged(true);
     }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("message", "Main Activity onCreate");
     }
 
     @Override

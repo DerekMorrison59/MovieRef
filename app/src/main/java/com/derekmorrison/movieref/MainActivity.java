@@ -16,11 +16,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if( savedInstanceState == null ) {
+        // Setup handler for uncaught exceptions.
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable e) {
+                handleUncaughtException(thread, e);
+            }
+        });
+
+        if (savedInstanceState == null ) {
             // make sure the data gets updated on the first time through
             Globals.getInstance().setPrefChanged(true);
         }
 
+        // allow the app to rotate with the device
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
         setContentView(R.layout.activity_main);
@@ -59,5 +68,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    // taken from:   http://stackoverflow.com/questions/19897628/need-to-handle-uncaught-exception-and-send-log-file
+    // did not include the sending of a log file at this time
+    public void handleUncaughtException (Thread thread, Throwable e)
+    {
+        e.printStackTrace(); // not all Android versions will print the stack trace automatically
+
+        //Intent intent = new Intent ();
+        //intent.setAction ("com.mydomain.SEND_LOG"); // see step 5.
+        //intent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK); // required when starting from Application
+        //startActivity (intent);
+
+        // ask the O/S to end this app
+        finish();
+        //System.exit(1); // kill off the crashed app
     }
 }

@@ -12,11 +12,14 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -49,8 +52,13 @@ import java.util.Arrays;
  */
 public class MainActivityFragment extends Fragment {
 
+    private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+    private static final String GRID_STATE = "GridState";
+    private static final String LAST_MOVIE_DATA = "LastMovieData";
+
     private MovieData[] mResult;
     private MovieArrayAdapter mMovieAdapter;
+    private Parcelable mGridState = null;
 
     public MainActivityFragment() {
     }
@@ -59,11 +67,10 @@ public class MainActivityFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // savedInstanceState always seems to be null
         if (savedInstanceState != null) {
 
             // all the MovieData objects were saved in the Bundle
-            mResult = (MovieData[]) savedInstanceState.getParcelableArray("LastMovieData");
+            mResult = (MovieData[]) savedInstanceState.getParcelableArray(LAST_MOVIE_DATA);
 
             if (mResult != null) {
                 ArrayList<MovieData> movieList = new ArrayList(Arrays.asList(mResult));
@@ -72,21 +79,47 @@ public class MainActivityFragment extends Fragment {
                         movieList
                 );
             }
+            // restore the GridView state to keep the same 'top left' poster visible when rotating
+            // or app switching
+            mGridState = savedInstanceState.getParcelable(GRID_STATE);
         }
 
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
     }
 
+    private GridView getGridView(){
+        GridView gv = null;
+
+        View view = getView();
+        if (view != null){
+            gv = (GridView) view.findViewById(R.id.poster_gridView);
+        }
+
+        return gv;
+    }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelableArray("LastMovieData", mResult);
+
+        // save the array of MovieData objects for later
+        outState.putParcelableArray(LAST_MOVIE_DATA, mResult);
+
+        // save the instance state of the GridView for later
+        mGridState = getGridView().onSaveInstanceState();
+        outState.putParcelable(GRID_STATE, mGridState);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        if (mGridState != null){
+            // the instance state of the GridView was saved above in onSaveInstanceState
+            // now use this info to restore the GridView to the 'look' it had before
+            getGridView().onRestoreInstanceState(mGridState);
+        }
     }
 
     @Override
@@ -96,6 +129,8 @@ public class MainActivityFragment extends Fragment {
 
         // if the mMovieAdapter was just restored by the onCreate method then we don't need to create a new one
         if (mMovieAdapter == null) {
+
+            // load some fake data into the MovieArrayAdapter
             MovieData tempMovie = new MovieData("Loading...", "", "", "", "Please be patient");
             ArrayList<MovieData> mList = new ArrayList(Arrays.asList(tempMovie));
 
@@ -114,12 +149,11 @@ public class MainActivityFragment extends Fragment {
             }
         );
 
-
-        // Get a reference to the GridView, and attach the Movie Adapter to it.
+        // Get a reference to the GridView, and attach the MovieArrayAdapter to it.
         GridView gridView = (GridView) rootView.findViewById(R.id.poster_gridView);
         gridView.setAdapter(mMovieAdapter);
 
-        // attach a Listener to launch the MovieDetailActivity when a poster is tapped
+        // attach a Listener to launch the MovieDetailActivity when a movie poster is tapped
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
@@ -136,6 +170,17 @@ public class MainActivityFragment extends Fragment {
                 startActivity(detailIntent);
             }
         });
+
+        // find out the current orientaion of the device
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        int orientation = display.getRotation();
+
+        // adjust the number of columns in the grid view based on the orientation
+        if (orientation == Surface.ROTATION_90 || orientation == Surface.ROTATION_270)  {
+            gridView.setNumColumns(6);
+        } else if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
+            gridView.setNumColumns(4);
+        }
 
         return rootView;
     }
@@ -251,7 +296,7 @@ public class MainActivityFragment extends Fragment {
         }
 
         /**
-         * This was mostly copied from the UDACITY Sunshine project
+         * This code was mostly copied from the UDACITY Sunshine project
          *
          * Take the String representing the movies in JSON Format and
          * pull out the data we need to construct the Strings needed for the wireframes.
@@ -275,7 +320,7 @@ public class MainActivityFragment extends Fragment {
 
             int numMovies = movieArray.length();
 
-            MovieData[] resultStrs = new MovieData[numMovies];
+            MovieData[] movieDatas = new MovieData[numMovies];
 
             for(int i = 0; i < movieArray.length(); i++) {
 
@@ -284,14 +329,14 @@ public class MainActivityFragment extends Fragment {
 
                 // replace the word 'null' with 'N/A', it's a little more user friendly
                 // while copying the fields we want into a new MovieData instance
-                resultStrs[i] = new MovieData(
+                movieDatas[i] = new MovieData(
                     ReplaceNull(movieInfo.getString(TMDB_TITLE)),
                     ReplaceNull(movieInfo.getString(TMDB_RELEASE_DATE)),
                     ReplaceNull(movieInfo.getString(TMDB_POSTER_PATH)),
                     ReplaceNull(movieInfo.getString(TMDB_VOTE)),
                     ReplaceNull(movieInfo.getString(TMDB_DESCRIPTION)));
             }
-            return resultStrs;
+            return movieDatas;
         }
 
         @Override
@@ -441,7 +486,10 @@ public class MainActivityFragment extends Fragment {
             This code was lifted from a couple of examples found on StackOverflow
 
           this method checks for a data connection and then attempts to 'ping' a google server
-          if the '204' request is successful then 'true' is returned
+          with a very lightweight request / response
+
+          if the '204' request is successful then 'true' is returned to the caller
+          meaning that the network is available and functioning
         */
         public boolean hasActiveInternetConnection(Context context) {
             if (isNetworkAvailable(context)) {

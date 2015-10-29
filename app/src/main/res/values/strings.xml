@@ -24,7 +24,7 @@
         <item>0</item>
     </string-array>
 
-    <string name="pref_api_key_title">API Key String for The Movie Database (TMDB)</string>
+    <string name="pref_api_key_title">API Key String for The Movie Database</string>
     <string name="pref_api_key_summary">Used to access TMDB programmatically</string>
 
     <string name="pref_min_votes_title">Requires at least 50 Votes</string>

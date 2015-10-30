@@ -17,9 +17,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -55,10 +53,12 @@ public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private static final String GRID_STATE = "GridState";
     private static final String LAST_MOVIE_DATA = "LastMovieData";
+    private static final String SORTED_BY_TEXT = "SortedByText";
 
     private MovieData[] mResult;
     private MovieArrayAdapter mMovieAdapter;
     private Parcelable mGridState = null;
+    private String mSortedByText = null;
 
     public MainActivityFragment() {
     }
@@ -82,6 +82,8 @@ public class MainActivityFragment extends Fragment {
             // restore the GridView state to keep the same 'top left' poster visible when rotating
             // or app switching
             mGridState = savedInstanceState.getParcelable(GRID_STATE);
+
+            mSortedByText = savedInstanceState.getString(SORTED_BY_TEXT);
         }
 
         // Add this line in order for this fragment to handle menu events.
@@ -109,6 +111,8 @@ public class MainActivityFragment extends Fragment {
         // save the instance state of the GridView for later
         mGridState = getGridView().onSaveInstanceState();
         outState.putParcelable(GRID_STATE, mGridState);
+
+        outState.putString(SORTED_BY_TEXT, mSortedByText);
     }
 
     @Override
@@ -138,6 +142,11 @@ public class MainActivityFragment extends Fragment {
                 getActivity(),
                 mList
             );
+        }
+
+        if (mSortedByText != null){
+            TextView tSort = (TextView)rootView.findViewById(R.id.selectedBytextView);
+            tSort.setText(mSortedByText);
         }
 
         // get a reference to the Retry Connection button and setup a listener
@@ -170,17 +179,6 @@ public class MainActivityFragment extends Fragment {
                 startActivity(detailIntent);
             }
         });
-
-        // find out the current orientaion of the device
-        Display display = getActivity().getWindowManager().getDefaultDisplay();
-        int orientation = display.getRotation();
-
-        // adjust the number of columns in the grid view based on the orientation
-        if (orientation == Surface.ROTATION_90 || orientation == Surface.ROTATION_270)  {
-            gridView.setNumColumns(6);
-        } else if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-            gridView.setNumColumns(4);
-        }
 
         return rootView;
     }
@@ -239,6 +237,7 @@ public class MainActivityFragment extends Fragment {
             String sort_selection = getResources().getString(R.string.sorted_by_title);
             sort_selection += sorted_by;
             selectedBy.setText(sort_selection);
+            mSortedByText = sort_selection;
         }
 
         // create a new async task and launch it

@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState == null ) {
             // make sure the data gets updated on the first time through
-            Globals.getInstance().setPrefChanged(true);
+            Globals.getInstance().setRefreshNeeded(true);
         }
 
         // allow the app to rotate with the device
@@ -58,8 +58,9 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+
             // use an Intent to launch the SettingsActivity
-            // ToDo explain the Extras
+            // Adding these EXTRAs tells the O/S to skip over the HEADER page and go straight to the GeneralPreferenceFragment
             Intent settingsIntent =  new Intent(this, SettingsActivity.class);
             settingsIntent.putExtra(PreferenceActivity.EXTRA_NO_HEADERS, true);
             settingsIntent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.GeneralPreferenceFragment.class.getName());
@@ -76,13 +77,7 @@ public class MainActivity extends AppCompatActivity {
     {
         e.printStackTrace(); // not all Android versions will print the stack trace automatically
 
-        //Intent intent = new Intent ();
-        //intent.setAction ("com.mydomain.SEND_LOG"); // see step 5.
-        //intent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK); // required when starting from Application
-        //startActivity (intent);
-
         // ask the O/S to end this app
         finish();
-        //System.exit(1); // kill off the crashed app
     }
 }

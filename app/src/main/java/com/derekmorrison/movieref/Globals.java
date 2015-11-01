@@ -4,17 +4,17 @@ public class Globals{
     private static Globals instance;
 
     // Global variables
-    private boolean prefChanged = true;
+    private boolean RefreshNeeded = true;
     private boolean hasDataConnection = false;
 
     // Restrict the constructor from being instantiated
     private Globals(){}
 
-    public void setPrefChanged(boolean b){
-        this.prefChanged=b;
+    public void setRefreshNeeded(boolean b){
+        this.RefreshNeeded =b;
     }
-    public boolean getPrefChanged(){
-        return this.prefChanged;
+    public boolean getRefreshNeeded(){
+        return this.RefreshNeeded;
     }
 
     public void setDataConnection(boolean b){

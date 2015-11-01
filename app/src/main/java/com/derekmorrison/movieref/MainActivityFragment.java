@@ -38,7 +38,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
+/*
  * This Fragment contains a GridView of movie posters. The list is based on the most popular
  * or the highest vote score (user setting). Fetching the movie data from The Movie Database
  * (TMDB) is done on an Async thread and the data for each movie is stored in an instance
@@ -67,6 +67,13 @@ public class MainActivityFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /* the savedInstanceState is being used to save / restore the following:
+         *   - all movie data from the last call to TMDB
+         *   - the state information of the GridView that holds the poster thumbnails
+         *   - the string that is being displayed that indicates the sort method used
+         *     when requesting the movie data
+         */
+
         if (savedInstanceState != null) {
 
             // all the MovieData objects were saved in the Bundle
@@ -79,10 +86,12 @@ public class MainActivityFragment extends Fragment {
                         movieList
                 );
             }
+
             // restore the GridView state to keep the same 'top left' poster visible when rotating
             // or app switching
             mGridState = savedInstanceState.getParcelable(GRID_STATE);
 
+            // get the sorted by string: Most Popular or Highest Score
             mSortedByText = savedInstanceState.getString(SORTED_BY_TEXT);
         }
 
@@ -90,6 +99,7 @@ public class MainActivityFragment extends Fragment {
         setHasOptionsMenu(true);
     }
 
+    // convenience method to get a reference to the poster gridview
     private GridView getGridView(){
         GridView gv = null;
 
@@ -112,6 +122,7 @@ public class MainActivityFragment extends Fragment {
         mGridState = getGridView().onSaveInstanceState();
         outState.putParcelable(GRID_STATE, mGridState);
 
+        // save the sorted by string: Most Popular or Highest Score
         outState.putString(SORTED_BY_TEXT, mSortedByText);
     }
 
@@ -188,7 +199,7 @@ public class MainActivityFragment extends Fragment {
         super.onStart();
 
         // The SettingsActivity will set a Global boolean whenever a preference is changed
-        if (Globals.getInstance().getPrefChanged()) {
+        if (Globals.getInstance().getRefreshNeeded()) {
             updateMovieList();
         }
     }
@@ -240,7 +251,7 @@ public class MainActivityFragment extends Fragment {
             mSortedByText = sort_selection;
         }
 
-        // create a new async task and launch it
+        // create a new async task to fetch the movie data from TMDB and launch it
         FetchMoviesTask moviesTask = new FetchMoviesTask();
         moviesTask.execute(pList);
     }
@@ -260,25 +271,27 @@ public class MainActivityFragment extends Fragment {
                 dialog.dismiss();
 
                 // use an Intent to launch the SettingsActivity
+                // Adding these EXTRAs tells the O/S to skip over the HEADER page and go straight to the GeneralPreferenceFragment
                 Intent settingsIntent = new Intent(getActivity(), SettingsActivity.class);
                 settingsIntent.putExtra(PreferenceActivity.EXTRA_NO_HEADERS, true);
                 settingsIntent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.GeneralPreferenceFragment.class.getName());
                 startActivity(settingsIntent);
                 }
             });
+
         builder.setNegativeButton(R.string.no_key_negative_button,
             new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                    getActivity().finish();
+                dialog.dismiss();
+                getActivity().finish();
                 }
             });
 
         builder.show();
     }
 
-
+    // asynchronus task to do the http request / response to get the movie data
     public class FetchMoviesTask extends AsyncTask<String, Void, MovieData[]> {
 
         private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
@@ -400,8 +413,6 @@ public class MainActivityFragment extends Fragment {
                 urlConnection.connect();
 
                 // Read the input stream into a String
-
-                // ToDo try catch block here - error probably bad api key
                 InputStream inputStream = urlConnection.getInputStream();
 
                 StringBuffer buffer = new StringBuffer();
@@ -457,12 +468,10 @@ public class MainActivityFragment extends Fragment {
 
 
         /*
-            This code was lifted from a couple of examples found on StackOverflow
-
-            requires     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-            this method tests the flags available in the ConnectivityManager and returns 'true' if any data path is 'CONNECTED'
-        */
+         *  This code was lifted from a couple of examples found on StackOverflow
+         *  requires     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+         *  this method tests the flags available in the ConnectivityManager and returns 'true' if any data path is 'CONNECTED'
+         */
         public boolean isNetworkAvailable(Context context) {
             ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -482,14 +491,14 @@ public class MainActivityFragment extends Fragment {
         }
 
         /*
-            This code was lifted from a couple of examples found on StackOverflow
+         * This code was lifted from a couple of examples found on StackOverflow
 
-          this method checks for a data connection and then attempts to 'ping' a google server
-          with a very lightweight request / response
+         * this method checks for a data connection and then attempts to 'ping' a google server
+         * with a very lightweight request / response
 
-          if the '204' request is successful then 'true' is returned to the caller
-          meaning that the network is available and functioning
-        */
+         * if the '204' request is successful then 'true' is returned to the caller
+         * meaning that the network is available and functioning
+         */
         public boolean hasActiveInternetConnection(Context context) {
             if (isNetworkAvailable(context)) {
                 try {
@@ -513,9 +522,6 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieData[] result) {
 
-            // reset the flag to avoid unnecessary updates
-            Globals.getInstance().setPrefChanged(false);
-
             int errorMsgVisibility = View.GONE;
             String errMessageString = getResources().getString(R.string.no_internet_connection);
 
@@ -523,6 +529,10 @@ public class MainActivityFragment extends Fragment {
             mMovieAdapter.clear();
 
             if (result != null) {
+
+                // reset the flag to avoid unnecessary updates
+                Globals.getInstance().setRefreshNeeded(false);
+
                 // save this array for saveInstanceState call
                 mResult = result;
 
@@ -530,9 +540,22 @@ public class MainActivityFragment extends Fragment {
                 ArrayList<MovieData> m = new ArrayList(Arrays.asList(result));
                 mMovieAdapter.addAll(m);
             } else {
+
+                // the saved data is no longer valid
+                mResult = null;
+                mSortedByText = null;
+                Globals.getInstance().setRefreshNeeded(true);
+
                 // show error message to the user
                 errorMsgVisibility = View.VISIBLE;
 
+                /*
+                 * There are 2 main reasons that the 'result' can be null
+                 * - the data connection is not working
+                 * - the API Key is bad
+                 *
+                 *  It's possible that The Movie Database is not available or broken....
+                 */
                 if (Globals.getInstance().getDataConnection()){
                     errMessageString = getResources().getString(R.string.error_check_API_Key);
                 }
@@ -542,13 +565,12 @@ public class MainActivityFragment extends Fragment {
             TextView errorMsgTextView = null;
             View thisView = getView();
 
-            // make sure the view is not null before using it to find the TextView
             if (thisView != null) {
                 retry = (Button) thisView.findViewById(R.id.retryButton);
                 errorMsgTextView = (TextView) thisView.findViewById(R.id.errorTMDB_TextView);
             }
 
-            // make sure the TextView was found before setting the visibility
+            // the TextView is only visible when there is an error condition
             if (errorMsgTextView != null) {
                 errorMsgTextView.setText(errMessageString);
                 errorMsgTextView.setVisibility(errorMsgVisibility);

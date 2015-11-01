@@ -9,18 +9,30 @@
     android:id="@+id/fragment_main"
     tools:showIn="@layout/content_main"
     tools:context=".MainActivityFragment"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp">
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp">
 
 
-    <TextView
-        android:layout_width="fill_parent"
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="most popular by ..."
-        android:id="@+id/selectedBytextView"
         android:layout_gravity="center_horizontal"
-        android:paddingBottom="7dp" />
+        android:background="@color/material_blue_grey_800">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="most popular by ..."
+            android:background="@color/material_blue_grey_800"
+            android:textColor="@color/bright_foreground_material_dark"
+            android:id="@+id/selectedBytextView"
+            android:layout_gravity="center_horizontal"
+            android:paddingBottom="5dp"
+            android:gravity="center_horizontal"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp" />
+    </FrameLayout>
 
     <GridView
         android:layout_width="fill_parent"
@@ -33,7 +45,8 @@
         android:layout_gravity="center"
         android:numColumns="auto_fit"
         android:stretchMode="spacingWidthUniform"
-        android:columnWidth="100dp" />
+        android:columnWidth="100dp"
+        android:layout_marginTop="4dp" />
 
     <TextView
         android:layout_width="match_parent"

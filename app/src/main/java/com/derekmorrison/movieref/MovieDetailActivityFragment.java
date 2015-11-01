@@ -10,8 +10,13 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-/**
- * A placeholder fragment containing a simple view.
+/*
+ * this fragment displays the details about a single movie including:
+ * - title
+ * - large poster
+ * - rating (0 to 10)
+ * - original release date
+ * - overview (plot summary)
  */
 public class MovieDetailActivityFragment extends Fragment {
 
@@ -57,15 +62,26 @@ public class MovieDetailActivityFragment extends Fragment {
             final String TMDB_IMAGE_SIZE = "w780";
 
             if (thisMovie.getmPosterPath().equals(getResources().getString(R.string.not_available_NA))) {
-                // load the "Image Not Available" image because there is no poster
-                Picasso.with(rootView.getContext()).load(R.drawable.image_not_avail).into(imageView);
+
+                // load the "Image Not Available" image because there is no poster on TMDB website
+                Picasso
+                    .with(rootView.getContext())
+                    .load(R.drawable.image_not_avail)
+                    .error(R.drawable.error_image_not_loaded)
+                    .into(imageView);
             } else {
+
+                // create the URL for the image
                 StringBuilder imageURL = new StringBuilder(TMDB_BASE);
                 imageURL.append(TMDB_IMAGE_SIZE);
                 imageURL.append(thisMovie.getmPosterPath());
 
                 // use the Picasso library to do image handling
-                Picasso.with(rootView.getContext()).load(imageURL.toString()).into(imageView);
+                Picasso
+                    .with(rootView.getContext())
+                    .load(imageURL.toString())
+                    .error(R.drawable.error_image_not_loaded)  // Picasso was unable to download the poster image
+                    .into(imageView);
             }
         }
 

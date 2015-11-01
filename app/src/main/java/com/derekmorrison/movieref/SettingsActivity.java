@@ -40,8 +40,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
 
-        // make sure the global flag 'prefChanged' starts out as false
-        Globals.getInstance().setPrefChanged(false);
+        // make sure the global flag 'RefreshNeeded' starts out as false
+        Globals.getInstance().setRefreshNeeded(false);
     }
 
     /**
@@ -66,7 +66,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
         return super.onMenuItemSelected(featureId, item);
     }
-
 
     /**
      * {@inheritDoc}
@@ -101,15 +100,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
-
             String stringValue = value.toString();
 
             // update the preference summary to reflect the new value
             updateSummary(preference, stringValue);
 
-            // let other activities know that the preferences were changed
-            Globals.getInstance().setPrefChanged(true);
-
+            // remember that the preferences were changed and TMDB must be called again
+            Globals.getInstance().setRefreshNeeded(true);
             return true;
         }
     };
@@ -136,7 +133,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
     }
 
-
     /**
      * Binds a preference's summary to its value. More specifically, when the
      * preference's value is changed, its summary (line of text below the
@@ -155,6 +151,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(preference.getContext());
         Object prefValue;
 
+        // very important to look for the special case of a CheckBox
         if (preference instanceof CheckBoxPreference){
             prefValue = sp.getBoolean(key, false);
         } else {
@@ -172,9 +169,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || GeneralPreferenceFragment.class.getName().equals(fragmentName)
-                || DataSyncPreferenceFragment.class.getName().equals(fragmentName)
-                || NotificationPreferenceFragment.class.getName().equals(fragmentName);
+            || GeneralPreferenceFragment.class.getName().equals(fragmentName)
+            || DataSyncPreferenceFragment.class.getName().equals(fragmentName)
+            || NotificationPreferenceFragment.class.getName().equals(fragmentName);
     }
 
     /**
@@ -193,8 +190,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-
-            bindPreferenceSummaryToValue(findPreference("Sort Order"));       //("@string/pref_sort_order"));
+            bindPreferenceSummaryToValue(findPreference("Sort Order"));
             bindPreferenceSummaryToValue(findPreference("pref_vote_count"));
             bindPreferenceSummaryToValue(findPreference("pref_api_key"));
         }
@@ -205,21 +201,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             if (id == android.R.id.home) {
                 if (getActivity().getIntent().getBooleanExtra(EXTRA_NO_HEADERS, false)){
                     return false;
+                } else {
+                    startActivity(new Intent(getActivity(), SettingsActivity.class));
+                    return true;
                 }
-
-
-
-                //Intent settingsIntent = getActivity().getIntent();  //new Intent(getActivity(), SettingsActivity.class);
-
-                //boolean fred = getActivity().getIntent().getBooleanExtra(EXTRA_NO_HEADERS, true);
-                //return !fred;
-
-                //settingsIntent.putExtra(PreferenceActivity.EXTRA_NO_HEADERS, true);
-                //settingsIntent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.GeneralPreferenceFragment.class.getName());
-                //startActivity(settingsIntent);
-
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
             }
             return super.onOptionsItemSelected(item);
         }
